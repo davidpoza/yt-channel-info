@@ -53,15 +53,15 @@ class YoutubeGrabberHelper {
     const videoTitle = response.data[2].playerResponse.videoDetails.title
     const channelName = response.data[2].playerResponse.videoDetails.author
 
-    // let continuation = null
+    let continuation = null
 
-    // const continuationItem = channelVideoData.items.filter((item) => {
-    //   return typeof (item.continuationItemRenderer) !== 'undefined'
-    // })
+    const continuationItem = relatedVideos.filter((item) => {
+      return typeof (item.continuationItemRenderer) !== 'undefined'
+    })
 
-    // if (continuationItem.length > 0) {
-    //   continuation = continuationItem[0].continuationItemRenderer.continuationEndpoint.continuationCommand.token
-    // }
+    if (continuationItem.length > 0) {
+      continuation = continuationItem[0].continuationItemRenderer.continuationEndpoint.continuationCommand.token
+    }
 
     // const unique = (value, index, self) => {
     //   return self.map(e => e.channelUrl).indexOf(value.channelUrl) === index
@@ -71,8 +71,8 @@ class YoutubeGrabberHelper {
       return value.channelName !== channelName
     }
 
-    const relatedChannels = relatedVideos.filter((video) => { // remove all but compactVideoRenderer types
-      return (video.compactVideoRenderer)
+    const relatedChannels = relatedVideos.filter((item) => { // remove all but compactVideoRenderer types
+      return (item.compactVideoRenderer)
     })
       .map((video) => {
         return ({
@@ -98,7 +98,7 @@ class YoutubeGrabberHelper {
       id: videoId,
       title: videoTitle,
       relatedChannels: relatedChannelsWHits,
-      // continuation: continuation
+      continuation
     }
   }
 
