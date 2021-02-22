@@ -27,6 +27,65 @@ class YoutubeGrabberHelper {
     }
   }
 
+  static async makeVideoRequest(url) {
+    // Electron doesn't like adding a user-agent in this way.  It might be needed in non-Electron based apps though.
+    // 'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36',
+    const config = {
+      headers: {
+        'x-youtube-client-name': '1',
+        'x-youtube-client-version': '2.20180222',
+        'accept-language': 'en-US,en;q=0.5'
+      }
+    }
+
+    try {
+      return await axios.get(url, config)
+    } catch (e) {
+      return {
+        error: true,
+        message: e
+      }
+    }
+  }
+
+  static async parseVideoResponse(response, videoId) {
+    const relatedVideos = response.data[3].response.contents.twoColumnWatchNextResults.secondaryResults.secondaryResults.results
+    const videoTitle = response.data[2].playerResponse.videoDetails.title
+
+    // let continuation = null
+
+    // const continuationItem = channelVideoData.items.filter((item) => {
+    //   return typeof (item.continuationItemRenderer) !== 'undefined'
+    // })
+
+    // if (continuationItem.length > 0) {
+    //   continuation = continuationItem[0].continuationItemRenderer.continuationEndpoint.continuationCommand.token
+    // }
+
+    const relatedChannels = relatedVideos.filter((video) => { // remove all but compactVideoRenderer types
+      return (video.compactVideoRenderer)
+    })
+      .map((video) => {
+        return ({
+          channelName: video.compactVideoRenderer.longBylineText.runs[0].text,
+          channelUrl: video.compactVideoRenderer.longBylineText.runs[0].navigationEndpoint.commandMetadata.webCommandMetadata.url,
+        })
+      })
+
+    const unique = (value, index, self) => {
+      return self.map(e => e.channelUrl).indexOf(value.channelUrl) === index
+    }
+
+    const relatedChannelsDistinct = relatedChannels.filter(unique)
+
+    return {
+      id: videoId,
+      title: videoTitle,
+      relatedChannels: relatedChannelsDistinct,
+      // continuation: continuation
+    }
+  }
+
   static async parseChannelVideoResponse(response, channelId) {
     const channelMetaData = response.data[1].response.metadata.channelMetadataRenderer
     const channelName = channelMetaData.title

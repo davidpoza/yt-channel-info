@@ -4,6 +4,7 @@ const queryString = require('querystring')
 // Fetchers
 const YoutubeChannelFetcher = require('./fetchers/channel')
 const YoutubePlaylistFetcher = require('./fetchers/playlist')
+const YoutubeVideoFetcher = require('./fetchers/video')
 
 class YoutubeGrabber {
   /**
@@ -120,6 +121,10 @@ class YoutubeGrabber {
     }
 
     return channelInfo
+  }
+
+  static async getRelatedChannels (videoId) {
+    return await YoutubeVideoFetcher.getVideo(videoId)
   }
 
   static async getChannelVideos (channelId, sortBy = 'newest') {
@@ -352,3 +357,8 @@ class YoutubeGrabber {
 }
 
 module.exports = YoutubeGrabber
+
+async function print() {
+  console.log(await YoutubeGrabber.getRelatedChannels('XcOFR3y1m2s'))
+}
+print()
