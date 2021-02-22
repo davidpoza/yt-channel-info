@@ -51,6 +51,7 @@ class YoutubeGrabberHelper {
   static async parseVideoResponse(response, videoId) {
     const relatedVideos = response.data[3].response.contents.twoColumnWatchNextResults.secondaryResults.secondaryResults.results
     const videoTitle = response.data[2].playerResponse.videoDetails.title
+    const channelName = response.data[2].playerResponse.videoDetails.author
 
     // let continuation = null
 
@@ -67,7 +68,7 @@ class YoutubeGrabberHelper {
     })
       .map((video) => {
         return ({
-          channelName: video.compactVideoRenderer.longBylineText.runs[0].text,
+          channelName: video.compactVideoRenderer.longBylineText.runs[0].text.replace(/\\/gmi, '--->'),
           channelUrl: video.compactVideoRenderer.longBylineText.runs[0].navigationEndpoint.commandMetadata.webCommandMetadata.url,
         })
       })
@@ -76,7 +77,13 @@ class YoutubeGrabberHelper {
       return self.map(e => e.channelUrl).indexOf(value.channelUrl) === index
     }
 
-    const relatedChannelsDistinct = relatedChannels.filter(unique)
+    const notCurrentChannel = (value) => {
+      return value.channelName !== channelName
+    }
+
+    const relatedChannelsDistinct = relatedChannels
+      .filter(notCurrentChannel)
+      .filter(unique)
 
     return {
       id: videoId,
