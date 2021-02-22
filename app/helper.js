@@ -63,32 +63,41 @@ class YoutubeGrabberHelper {
     //   continuation = continuationItem[0].continuationItemRenderer.continuationEndpoint.continuationCommand.token
     // }
 
-    const relatedChannels = relatedVideos.filter((video) => { // remove all but compactVideoRenderer types
-      return (video.compactVideoRenderer)
-    })
-      .map((video) => {
-        return ({
-          channelName: video.compactVideoRenderer.longBylineText.runs[0].text.replace(/\\/gmi, '--->'),
-          channelUrl: video.compactVideoRenderer.longBylineText.runs[0].navigationEndpoint.commandMetadata.webCommandMetadata.url,
-        })
-      })
-
-    const unique = (value, index, self) => {
-      return self.map(e => e.channelUrl).indexOf(value.channelUrl) === index
-    }
+    // const unique = (value, index, self) => {
+    //   return self.map(e => e.channelUrl).indexOf(value.channelUrl) === index
+    // }
 
     const notCurrentChannel = (value) => {
       return value.channelName !== channelName
     }
 
-    const relatedChannelsDistinct = relatedChannels
+    const relatedChannels = relatedVideos.filter((video) => { // remove all but compactVideoRenderer types
+      return (video.compactVideoRenderer)
+    })
+      .map((video) => {
+        return ({
+          channelName: video.compactVideoRenderer.longBylineText.runs[0],
+          channelUrl: video.compactVideoRenderer.longBylineText.runs[0].navigationEndpoint.commandMetadata.webCommandMetadata.url,
+        })
+      })
       .filter(notCurrentChannel)
-      .filter(unique)
+
+    const relatedChannelsWHits = {}
+    relatedChannels.forEach(channel => {
+      if (!relatedChannelsWHits[channel.channelUrl]) {
+        relatedChannelsWHits[channel.channelUrl] = {
+          channelName: channel.channelName,
+          hits: 0,
+        }
+      } else {
+        relatedChannelsWHits[channel.channelUrl].hits++
+      }
+    })
 
     return {
       id: videoId,
       title: videoTitle,
-      relatedChannels: relatedChannelsDistinct,
+      relatedChannels: relatedChannelsWHits,
       // continuation: continuation
     }
   }
