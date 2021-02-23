@@ -127,6 +127,64 @@ class YoutubeGrabber {
     return await YoutubeVideoFetcher.getVideo(videoId)
   }
 
+  static async getRelatedChannelsMore (continuation, channelName) {
+    const urlParams = queryString.stringify({
+      key: 'AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8'
+    })
+    const url = `https://www.youtube.com/youtubei/v1/next?${urlParams}`
+    const videoPageResponse = await YoutubeGrabberHelper.makeVideoRequestMore(url, continuation)
+
+    if (videoPageResponse.error) {
+      return Promise.reject(videoPageResponse.message)
+    }
+
+    let nextContinuation = null
+
+    // look for next continuation token
+    const continuationData = videoPageResponse.data.onResponseReceivedEndpoints[0].appendContinuationItemsAction.continuationItems
+
+    const continuationItem = continuationData.filter((item) => {
+      return typeof (item.continuationItemRenderer) !== 'undefined'
+    })
+
+    if (typeof continuationItem !== 'undefined' && continuationItem[0]) {
+      nextContinuation = continuationItem[0].continuationItemRenderer.continuationEndpoint.continuationCommand.token
+    }
+
+    // get related videos
+    const notCurrentChannel = (value) => {
+      return value.channelName !== channelName
+    }
+
+    const relatedChannels = continuationData.filter((item) => { // remove all but compactVideoRenderer types
+      return (item.compactVideoRenderer)
+    })
+      .map((video) => {
+        return ({
+          channelName: video.compactVideoRenderer.longBylineText.runs[0].text,
+          channelUrl: video.compactVideoRenderer.longBylineText.runs[0].navigationEndpoint.commandMetadata.webCommandMetadata.url,
+        })
+      })
+      .filter(notCurrentChannel)
+
+    const relatedChannelsWHits = {}
+    relatedChannels.forEach(channel => {
+      if (!relatedChannelsWHits[channel.channelUrl]) {
+        relatedChannelsWHits[channel.channelUrl] = {
+          channelName: channel.channelName,
+          hits: 0,
+        }
+      } else {
+        relatedChannelsWHits[channel.channelUrl].hits++
+      }
+    })
+
+    return {
+      relatedChannels: relatedChannelsWHits,
+      continuation: nextContinuation
+    }
+  }
+
   static async getChannelVideos (channelId, sortBy = 'newest') {
     switch (sortBy) {
       case 'popular':
@@ -316,7 +374,7 @@ class YoutubeGrabber {
 
   static async searchChannelMore (continuation) {
     const urlParams = queryString.stringify({
-      continuation: continuation,
+      continuation: 1,
       ctoken: continuation
     })
     const ajaxUrl = `https://www.youtube.com/browse_ajax?${urlParams}`
@@ -359,6 +417,10 @@ class YoutubeGrabber {
 module.exports = YoutubeGrabber
 
 async function print() {
-  console.log(await YoutubeGrabber.getRelatedChannels('XcOFR3y1m2s'))
+  // const result = await YoutubeGrabber.getChannelVideos('UC36xmz34q02JYaZYKrMwXng')
+ const result = await YoutubeGrabber.getRelatedChannels('XcOFR3y1m2s')
+  console.log(result)
+   const result2 = await YoutubeGrabber.getRelatedChannelsMore(result.continuation, result.channelName);
+   console.log(result2)
 }
 print()

@@ -48,6 +48,29 @@ class YoutubeGrabberHelper {
     }
   }
 
+  static async makeVideoRequestMore(url, continuation) {
+    // Electron doesn't like adding a user-agent in this way.  It might be needed in non-Electron based apps though.
+    // 'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36',
+    const body = {
+      context: {
+        client: {
+          clientName: 'WEB',
+          clientVersion: '2.20180222'
+        }
+      },
+      continuation,
+    }
+
+    try {
+      return await axios.post(url, body)
+    } catch (e) {
+      return {
+        error: true,
+        message: e
+      }
+    }
+  }
+
   static async parseVideoResponse(response, videoId) {
     const relatedVideos = response.data[3].response.contents.twoColumnWatchNextResults.secondaryResults.secondaryResults.results
     const videoTitle = response.data[2].playerResponse.videoDetails.title
@@ -76,7 +99,7 @@ class YoutubeGrabberHelper {
     })
       .map((video) => {
         return ({
-          channelName: video.compactVideoRenderer.longBylineText.runs[0],
+          channelName: video.compactVideoRenderer.longBylineText.runs[0].text,
           channelUrl: video.compactVideoRenderer.longBylineText.runs[0].navigationEndpoint.commandMetadata.webCommandMetadata.url,
         })
       })
@@ -97,12 +120,14 @@ class YoutubeGrabberHelper {
     return {
       id: videoId,
       title: videoTitle,
+      channelName,
       relatedChannels: relatedChannelsWHits,
       continuation
     }
   }
 
   static async parseChannelVideoResponse(response, channelId) {
+    console.log(JSON.stringify(response.data))
     const channelMetaData = response.data[1].response.metadata.channelMetadataRenderer
     const channelName = channelMetaData.title
     const channelVideoData = response.data[1].response.contents.twoColumnBrowseResultsRenderer.tabs[1].tabRenderer.content.sectionListRenderer.contents[0].itemSectionRenderer.contents[0].gridRenderer
