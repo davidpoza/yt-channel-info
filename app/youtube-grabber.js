@@ -415,12 +415,3 @@ class YoutubeGrabber {
 }
 
 module.exports = YoutubeGrabber
-
-async function print() {
-  // const result = await YoutubeGrabber.getChannelVideos('UC36xmz34q02JYaZYKrMwXng')
- const result = await YoutubeGrabber.getRelatedChannels('XcOFR3y1m2s')
-  console.log(result)
-   const result2 = await YoutubeGrabber.getRelatedChannelsMore(result.continuation, result.channelName);
-   console.log(result2)
-}
-print()
