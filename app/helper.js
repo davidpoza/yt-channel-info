@@ -75,6 +75,7 @@ class YoutubeGrabberHelper {
     const relatedVideos = response.data[3].response.contents.twoColumnWatchNextResults.secondaryResults.secondaryResults.results
     const videoTitle = response.data[2].playerResponse.videoDetails.title
     const channelName = response.data[2].playerResponse.videoDetails.author
+    const keywords = response.data[2].playerResponse.videoDetails.keywords
 
     let continuation = null
 
@@ -121,6 +122,7 @@ class YoutubeGrabberHelper {
       id: videoId,
       title: videoTitle,
       channelName,
+      keywords,
       relatedChannels: relatedChannelsWHits,
       continuation
     }
